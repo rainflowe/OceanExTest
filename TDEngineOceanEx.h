@@ -110,7 +110,13 @@ WC_NAMESPACE_START
             virtual void release_api();
             virtual bool is_connected() const;
             virtual bool is_logged_in() const;
-            virtual string name() const { return "TDEngineOceanEx"; };
+            virtual string name() const {
+				if (source_id == SOURCE_OCEANEX) {
+					return "TDEngineOceanEx";
+				} else {
+					return "TDEngineOceanEx2";
+				}
+			};
 
             // req functions
             virtual void req_investor_position(const LFQryPositionField* data, int account_index, int requestId);
@@ -185,8 +191,6 @@ WC_NAMESPACE_START
 			void sendMultiOrders(const std::string ticker, AccountUnitOceanEx& unit, const std::vector<OceanExOrder>& orders, Document& json);
 			void send_multi_orders(const LFInputOrderField* data, int account_index, int requestId, long rcv_time);
 			void cancel_multi_orders(const LFOrderActionField* data, int account_index, int requestId, long rcv_time);
-
-			string get_name();
 			
         private:
 

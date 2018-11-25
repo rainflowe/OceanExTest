@@ -94,15 +94,6 @@ LUWcNJ/MtGvhTyxPd4z18SsgQ3g6Goc+swIBAw==
 )";
 
 
-std::string TDEngineOceanEx::get_name()
-{
-	if (source_id == SOURCE_OCEANEX) {
-		return "TDEngineOceanEx";
-	} else {
-		return "TDEngineOceanEx2";
-	}
-}
-
 TDEngineOceanEx::TDEngineOceanEx(): ITDEngine(SOURCE_OCEANEX)
 {
     logger = yijinjing::KfLog::getLogger("TradeEngine.OceanEx");
@@ -157,7 +148,7 @@ void TDEngineOceanEx::init()
 {
     ITDEngine::init();
     JournalPair tdRawPair = getTdRawJournalPair(source_id);
-    raw_writer = yijinjing::JournalSafeWriter::create(tdRawPair.first, tdRawPair.second, "RAW_" + get_name());
+    raw_writer = yijinjing::JournalSafeWriter::create(tdRawPair.first, tdRawPair.second, "RAW_" + name());
     KF_LOG_INFO(logger, "[init]");
 }
 
