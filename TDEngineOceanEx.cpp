@@ -1742,7 +1742,20 @@ inline int64_t TDEngineOceanEx::getTimestamp()
 
 #define GBK2UTF8(msg) kungfu::yijinjing::gbk2utf8(string(msg))
 
+
 BOOST_PYTHON_MODULE(liboceanextd)
+{
+    using namespace boost::python;
+    class_<TDEngineOceanEx, boost::shared_ptr<TDEngineOceanEx> >("Engine")
+            .def(init<>())
+            .def("init", &TDEngineOceanEx::initialize)
+            .def("start", &TDEngineOceanEx::start)
+            .def("stop", &TDEngineOceanEx::stop)
+            .def("logout", &TDEngineOceanEx::logout)
+            .def("wait_for_stop", &TDEngineOceanEx::wait_for_stop);
+}
+
+BOOST_PYTHON_MODULE(liboceanex2td)
 {
     using namespace boost::python;
     class_<TDEngineOceanEx, boost::shared_ptr<TDEngineOceanEx> >("Engine")
