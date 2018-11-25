@@ -116,7 +116,7 @@ public:
     /** return true if all accounts have been logged in */
     virtual bool is_logged_in() const = 0;
     /** get engine's name */
-    virtual string name() = 0;
+    virtual string name() const = 0;
 };
 
 DECLARE_PTR(IEngine);

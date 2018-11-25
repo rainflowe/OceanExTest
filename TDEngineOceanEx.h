@@ -110,7 +110,7 @@ WC_NAMESPACE_START
             virtual void release_api();
             virtual bool is_connected() const;
             virtual bool is_logged_in() const;
-            virtual string name(); //const { return "TDEngineOceanEx"; };
+            virtual string name(); const { return "TDEngineOceanEx"; };
 
             // req functions
             virtual void req_investor_position(const LFQryPositionField* data, int account_index, int requestId);
@@ -186,6 +186,7 @@ WC_NAMESPACE_START
 			void send_multi_orders(const LFInputOrderField* data, int account_index, int requestId, long rcv_time);
 			void cancel_multi_orders(const LFOrderActionField* data, int account_index, int requestId, long rcv_time);
 
+			string get_name();
 			
         private:
 
