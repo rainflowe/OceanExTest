@@ -94,7 +94,7 @@ LUWcNJ/MtGvhTyxPd4z18SsgQ3g6Goc+swIBAw==
 )";
 
 
-TDEngineOceanEx::name()
+std::string TDEngineOceanEx::name()
 {
 	if (source_id == SOURCE_OCEANEX) {
 		return "TDEngineOceanEx";
