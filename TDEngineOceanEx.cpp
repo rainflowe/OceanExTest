@@ -92,6 +92,17 @@ VobnkkZDH/pnjrdjWKW+Un6cO/WLDKKdsgloCBnFRH8jyAiifwTItTP+ejmKuqsj
 LUWcNJ/MtGvhTyxPd4z18SsgQ3g6Goc+swIBAw==
 -----END RSA PUBLIC KEY-----
 )";
+
+
+TDEngineOceanEx::name()
+{
+	if (source_id == SOURCE_OCEANEX) {
+		return "TDEngineOceanEx";
+	} else {
+		return "TDEngineOceanEx2";
+	}
+}
+
 TDEngineOceanEx::TDEngineOceanEx(): ITDEngine(SOURCE_OCEANEX)
 {
     logger = yijinjing::KfLog::getLogger("TradeEngine.OceanEx");
