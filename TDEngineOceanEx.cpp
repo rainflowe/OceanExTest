@@ -146,10 +146,11 @@ cpr::Response TDEngineOceanEx::Post(const std::string& method_url,const std::str
 
 void TDEngineOceanEx::init()
 {
+	KF_LOG_INFO(logger, "[init0]" << name());
     ITDEngine::init();
     JournalPair tdRawPair = getTdRawJournalPair(source_id);
     raw_writer = yijinjing::JournalSafeWriter::create(tdRawPair.first, tdRawPair.second, "RAW_" + name());
-    KF_LOG_INFO(logger, "[init]");
+    KF_LOG_INFO(logger, "[init1]" << name());
 }
 
 void TDEngineOceanEx::pre_load(const json& j_config)
