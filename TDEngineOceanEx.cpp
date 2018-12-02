@@ -1755,7 +1755,7 @@ BOOST_PYTHON_MODULE(liboceanextd)
             .def("wait_for_stop", &TDEngineOceanEx::wait_for_stop);
 }
 
-BOOST_PYTHON_MODULE(liboceanextd2)
+BOOST_PYTHON_MODULE(liboceanex2td)
 {
     using namespace boost::python;
     class_<TDEngineOceanEx, boost::shared_ptr<TDEngineOceanEx> >("Engine")
