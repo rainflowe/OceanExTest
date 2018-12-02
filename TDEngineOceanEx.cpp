@@ -219,7 +219,7 @@ TradeAccount TDEngineOceanEx::load_account(int idx, const json& j_config)
 
     unit.positionWhiteList.ReadWhiteLists(j_config, "positionWhiteLists");
     unit.positionWhiteList.Debug_print();
-
+	
     //display usage:
     if(unit.coinPairWhiteList.Size() == 0) {
         KF_LOG_ERROR(logger, "TDEngineOceanEx::load_account: please add whiteLists in kungfu.json like this :");
@@ -582,7 +582,9 @@ void TDEngineOceanEx::req_order_insert(const LFInputOrderField* data, int accoun
     }
 }
 
-//websocket的消息通常回来的比restful快，这时候因为消息里面有OrderId却找不到OrderRef，会先放入responsedOrderStatusNoOrderRef�?//当sendOrder返回OrderId信息之后,再处理这个信�?void TDEngineOceanEx::handlerResponsedOrderStatus(AccountUnitOceanEx& unit)
+//websocket的消息通常回来的比restful快，这时候因为消息里面有OrderId却找不到OrderRef，会先放入responsedOrderStatusNoOrderRef，
+//当sendOrder返回OrderId信息之后,再处理这个信息
+void TDEngineOceanEx::handlerResponsedOrderStatus(AccountUnitOceanEx& unit)
 {
     std::lock_guard<std::mutex> guard_mutex(*mutex_response_order_status);
 
@@ -715,7 +717,7 @@ void TDEngineOceanEx::req_order_action(const LFOrderActionField* data, int accou
     }
     }
 
-//对于每个撤单指令发出�?0秒（可配置）内，如果没有收到回报，就给策略报错（撤单被拒绝，pls retry)
+//对于每个撤单指令发出后30秒（可配置）内，如果没有收到回报，就给策略报错（撤单被拒绝，pls retry)
 void TDEngineOceanEx::addRemoteOrderIdOrderActionSentTime(const LFOrderActionField* data, int requestId, int64_t remoteOrderId)
 {
     std::lock_guard<std::mutex> guard_mutex_order_action(*mutex_orderaction_waiting_response);
@@ -816,17 +818,20 @@ void TDEngineOceanEx::retrieveOrderStatus(AccountUnitOceanEx& unit)
                 responsedOrderStatus.OrderPriceType = GetPriceType(data["ord_type"].GetString());
                 //买卖方向
                 responsedOrderStatus.Direction = GetDirection(data["side"].GetString());
-                //报单状�?                responsedOrderStatus.OrderStatus = GetOrderStatus(data["state"].GetString());
+                //报单状态
+                responsedOrderStatus.OrderStatus = GetOrderStatus(data["state"].GetString());
                 responsedOrderStatus.price = std::round(std::stod(data["price"].GetString()) * scale_offset);
                 responsedOrderStatus.volume = std::round(std::stod(data["volume"].GetString()) * scale_offset);
-                //今成交数�?                responsedOrderStatus.VolumeTraded = std::round(
+                //今成交数量
+                responsedOrderStatus.VolumeTraded = std::round(
                         std::stod(data["executed_volume"].GetString()) * scale_offset);
                 responsedOrderStatus.openVolume = std::round(
                         std::stod(data["remaining_volume"].GetString()) * scale_offset);
 
                 handlerResponseOrderStatus(unit, orderStatusIterator, responsedOrderStatus);
 
-                //OrderAction发出以后，有状态回来，就清空这次OrderAction的发送状态，不必制造超时提醒信�?                remoteOrderIdOrderActionSentTime.erase(orderStatusIterator->remoteOrderId);
+                //OrderAction发出以后，有状态回来，就清空这次OrderAction的发送状态，不必制造超时提醒信息
+                remoteOrderIdOrderActionSentTime.erase(orderStatusIterator->remoteOrderId);
             }
         } else {
             std::string errorMsg = "";
@@ -1001,7 +1006,7 @@ void TDEngineOceanEx::getResponse(int http_status_code, std::string responseText
 std::string TDEngineOceanEx::construct_request_body(const AccountUnitOceanEx& unit,const  std::string& data,bool isget)
 {
     std::string pay_load = R"({"uid":")" + unit.api_key + R"(","data":)" + data + R"(})";
-    std::string request_body = utils::crypto::jwt_create(pay_load,unit.secret_key);
+	std::string request_body = utils::crypto::jwt_create(pay_load,unit.secret_key);
     //std::cout  << "[construct_request_body] (request_body)" << request_body << std::endl;
     return  isget ? "user_jwt="+request_body:R"({"user_jwt":")"+request_body+"\"}";
 }
@@ -1171,12 +1176,17 @@ void TDEngineOceanEx::handlerResponseOrderStatus(AccountUnitOceanEx& unit, std::
         return;
     }
     int64_t newAveragePrice = responsedOrderStatus.averagePrice;
-    //cancel 需要特殊处�?    if(LF_CHAR_Canceled == responsedOrderStatus.OrderStatus)  {
+    //cancel 需要特殊处理
+    if(LF_CHAR_Canceled == responsedOrderStatus.OrderStatus)  {
         /*
-         * 因为restful查询有间隔时间，订单可能会先经历过部分成交，然后才达到的cancnel，所以得到cancel不能只认为是cancel，还需要判断有没有部分成交过�?        这时候需要补状态，补一个on rtn order，一个on rtn trade�?        这种情况仅cancel才有, 部分成交和全成交没有此问题�?        当然，也要考虑，如果上一次部分成交已经被抓取到的并返回过 on rtn order/on rtn trade，那么就不需要补�?         //2018-09-12.  不清楚websocket会不会有这个问题，先做同样的处理
+         * 因为restful查询有间隔时间，订单可能会先经历过部分成交，然后才达到的cancnel，所以得到cancel不能只认为是cancel，还需要判断有没有部分成交过。
+        这时候需要补状态，补一个on rtn order，一个on rtn trade。
+        这种情况仅cancel才有, 部分成交和全成交没有此问题。
+        当然，也要考虑，如果上一次部分成交已经被抓取到的并返回过 on rtn order/on rtn trade，那么就不需要补了
+         //2018-09-12.  不清楚websocket会不会有这个问题，先做同样的处理
         */
 
-        //虽然是撤单状态，但是已经成交的数量和上一次记录的数量不一样，期间一定发生了部分成交. 要补�?LF_CHAR_PartTradedQueueing
+        //虽然是撤单状态，但是已经成交的数量和上一次记录的数量不一样，期间一定发生了部分成交. 要补发 LF_CHAR_PartTradedQueueing
         if(responsedOrderStatus.VolumeTraded != orderStatusIterator->VolumeTraded) {
             //if status is LF_CHAR_Canceled but traded valume changes, emit onRtnOrder/onRtnTrade of LF_CHAR_PartTradedQueueing
             LFRtnOrderField rtn_order;
@@ -1197,7 +1207,8 @@ void TDEngineOceanEx::handlerResponseOrderStatus(AccountUnitOceanEx& unit, std::
             //剩余数量
             rtn_order.VolumeTotal = responsedOrderStatus.openVolume;
 
-            //经过2018-08-20讨论，这个on rtn order 可以不必发送了, 只记录raw有这么回事就行了。只补发一�?on rtn trade 就行了�?            //on_rtn_order(&rtn_order);
+            //经过2018-08-20讨论，这个on rtn order 可以不必发送了, 只记录raw有这么回事就行了。只补发一个 on rtn trade 就行了。
+            //on_rtn_order(&rtn_order);
             raw_writer->write_frame(&rtn_order, sizeof(LFRtnOrderField),
                                     source_id, DEF_TYPE_LF_RTN_ORDER_OCEANEX,
                                     1, (rtn_order.RequestID > 0) ? rtn_order.RequestID: -1);
