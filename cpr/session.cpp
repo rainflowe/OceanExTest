@@ -144,7 +144,9 @@ void Session::Impl::SetTimeout(const Timeout& timeout) {
 void Session::Impl::SetInterface(const Interface& interface) {
     auto curl = curl_->handle;
     if (curl) {
-        curl_easy_setopt(curl, CURLOPT_INTERFACE, interface.GetInterface());
+		if (strlen(interface.GetInterface()) > 0) {
+			curl_easy_setopt(curl, CURLOPT_INTERFACE, interface.GetInterface());
+		}
     }
 }
 
